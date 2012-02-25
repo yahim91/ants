@@ -1,3 +1,7 @@
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class Tile {
 	Tile(int row, int col) {
 		this.row = row;
@@ -6,6 +10,8 @@ public class Tile {
 
 	private int row;
 	private int col;
+        public int dist;
+        public Tile direction; 
 	
 	public int row() {
 		return this.row;

@@ -16,7 +16,10 @@ public class Ants {
 	private Map<Tile, Ilk> antList = new HashMap<Tile, Ilk>();
 	private Set<Tile> foodList = new HashSet<Tile>();
 	private Set<Tile> deadList = new HashSet<Tile>();
-	
+        private Set<Tile> visionOffs = new HashSet<Tile>();
+        private boolean[][] visible;
+        public int [][] time;
+    
 	public int turn() {
 		return this.turn;
 	}
@@ -55,7 +58,11 @@ public class Ants {
 
 	public long seed() {
 		return this.seed;
-	}
+        } 
+        
+        public boolean isVisible (Tile tile) {
+            return visible[tile.row()][tile.col()];
+        }
 
 	public boolean setup(List<String> data) {
 		try {
@@ -81,10 +88,25 @@ public class Ants {
 			    	this.seed = Long.parseLong(tokens[1]);
 			    }
 			}
+                        this.time = new int[this.rows][this.cols];
+                        this.visible = new boolean[this.rows][this.cols];
 			this.map = new Ilk[this.rows][this.cols];
 			for (Ilk[] row : this.map) {
 				Arrays.fill(row, Ilk.LAND);
 			}
+                        //calc vision offsets
+                        int m = (int) Math.sqrt(viewradius2);
+                        for (int r = -m; r <= m; ++r)
+                            for (int c = -m; c <= m; ++c) {
+                                int dist = r*r + c*c;
+                                if (dist <= viewradius2)
+                                    visionOffs.add(new Tile(r,c));
+                            }
+                        
+                        // setare timp spatiu neexplorat
+                        for (int i = 0; i <= rows; i++)
+                            Arrays.fill(time[i], 1000);
+                        
 			return true;
 		} catch (Exception ex) {
 			return false;
@@ -105,6 +127,14 @@ public class Ants {
 			this.map[dead.row()][dead.col()] = Ilk.LAND;
 		}
 		this.deadList.clear();
+                
+                // clear visible
+                for (int i = 0; i < this.rows; ++i) {
+                    for (int j = 0; j < this.cols; ++j) {
+                        visible [i][j] = false;
+                    }
+                }
+                
 		// get new tile ilks
 		for (String line : data) {
 			String tokens[] = line.split(" ");
@@ -113,6 +143,7 @@ public class Ants {
 				int col = Integer.parseInt(tokens[2]);
 				if (tokens[0].equals("w")) {
 			    	this.map[row][col] = Ilk.WATER;
+                                this.time[row][col] = 0;
 			    } else if (tokens[0].equals("a")) {
 			    	Ilk ilk = Ilk.fromId(Integer.parseInt(tokens[3]));
 			    	this.map[row][col] = ilk;
@@ -126,6 +157,21 @@ public class Ants {
 			    }			
 			}
 		}
+                
+                // incrementare timp camp neexplorat
+                for (int i = 0; i < rows; ++i) {
+                    for (int j = 0; j < cols; ++j)
+                        time[i][j] ++;
+                }
+                
+                // get vision tiles
+                for (Tile ant : myAnts()) {
+                    for (Tile offset : visionOffs) {
+                        Tile temp = tile (ant, offset);
+                        visible [temp.row()][temp.col()] = true;
+                        time[temp.row()][temp.col()] = 0;
+                    }
+                }
 		return true;
 	}
 	
@@ -212,6 +258,10 @@ public class Ants {
 		
 		return directions;
 	}
+        
+        public int time (Tile tile) {
+            return time[tile.row()][tile.col()];
+        }
 	
 	public Ilk ilk(Tile location, Aim direction) {
 		Tile new_location = this.tile(location, direction);
@@ -221,7 +271,24 @@ public class Ants {
 	public Ilk ilk(Tile location) {
 		return this.map[location.row()][location.col()];
 	}
-	
+        /**
+         * 
+         * @param tile
+         * @param offset
+         * @return new Tile
+         */
+	public Tile tile(Tile tile, Tile offset) {
+                int row = (tile.row() + offset.row()) % rows;
+                if (row < 0) {
+                row += rows;
+                }
+                int col = (tile.col() + offset.col()) % cols;
+                if (col < 0) {
+                col += cols;
+                }
+                return new Tile(row, col);
+        }
+        
 	public Tile tile(Tile location, Aim direction) {
 		int nRow = (location.row() + direction.dRow) % this.rows;
 		if (nRow < 0) {
