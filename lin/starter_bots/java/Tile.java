@@ -11,7 +11,8 @@ public class Tile {
 	private int row;
 	private int col;
         public int dist;
-        public Tile direction; 
+        public Tile direction;
+        public Tile ancestor;
 	
 	public int row() {
 		return this.row;

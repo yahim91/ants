@@ -6,7 +6,6 @@ public class RandomBot implements Bot {
     public static void main(String[] args) {
         Ants.run(new RandomBot());
     }
-    
 
     /**
      * metoda explore pentru o furnica fara task
@@ -54,7 +53,7 @@ public class RandomBot implements Bot {
         int max = 0;
         for (Aim aim : Aim.values()) {
             int timeTemp = ants.time(ants.tile(antLoc, aim));
-            if (timeTemp > max) {
+            if (timeTemp > max && ants.ilk(ants.tile(antLoc, aim)).isUnoccupied()) {
                 max = timeTemp;
                 next = aim;
             }
@@ -67,11 +66,18 @@ public class RandomBot implements Bot {
         Set<Tile> destinations = new HashSet<Tile>();
         for (Tile antLoc : ants.myAnts()) {
             boolean issued = false;
-            Aim next = explore(antLoc, ants);
-            if (next != null) {
-                ants.issueOrder(antLoc, next);
-                destinations.add(ants.tile(antLoc, next));
+            if (ants.foodTargets.containsKey(antLoc)
+                    && !destinations.contains(ants.foodTargets.get(antLoc))) {
+                destinations.add(ants.foodTargets.get(antLoc));
+                ants.issueOrder(antLoc, ants.foodTargets.get(antLoc));
                 issued = true;
+            } else {
+                Aim next = explore(antLoc, ants);
+                if (next != null) {
+                    ants.issueOrder(antLoc, next);
+                    destinations.add(ants.tile(antLoc, next));
+                    issued = true;
+                }
             }
 
             if (!issued) {
