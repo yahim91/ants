@@ -22,6 +22,8 @@ public class Ants {
     private boolean[][] visible;
     public int[][] time;
     public HashMap<Tile, Tile> foodTargets;
+    private Set<Tile> myHills;
+    private Set<Tile> enemyHills;
 
     public int turn() {
         return this.turn;
@@ -93,6 +95,12 @@ public class Ants {
             }
             this.time = new int[this.rows][this.cols];
             this.visible = new boolean[this.rows][this.cols];
+            this.myHills = new HashSet<Tile>();
+            this.enemyHills = new HashSet<Tile>();
+
+            for (int i = 0; i < this.rows; ++i) {
+                Arrays.fill(visible[i], false);
+            }
             this.map = new Ilk[this.rows][this.cols];
             for (Ilk[] row : this.map) {
                 Arrays.fill(row, Ilk.LAND);
@@ -136,9 +144,7 @@ public class Ants {
 
         // clear visible
         for (int i = 0; i < this.rows; ++i) {
-            for (int j = 0; j < this.cols; ++j) {
-                visible[i][j] = false;
-            }
+            Arrays.fill(visible[i], false);
         }
 
         // get new tile ilks
@@ -160,6 +166,13 @@ public class Ants {
                 } else if (tokens[0].equals("d")) {
                     this.map[row][col] = Ilk.DEAD;
                     this.deadList.add(new Tile(row, col));
+                } else if (tokens[0].equals("h")) {
+                    if (Integer.parseInt(tokens[3]) <= 0) {
+                        myHills.add(new Tile(row, col));
+                    } else {
+                        enemyHills.add(new Tile(row, col));
+                    }
+
                 }
             }
         }
@@ -182,10 +195,12 @@ public class Ants {
         gatherFood();
         return true;
     }
+
     /**
-     *  !!!! FOLOSIRE DOAR DACA T2 DIFERA DE T1
+     * !!!! FOLOSIRE DOAR DACA T2 DIFERA DE T1
+     *
      * @param t1
-     * @param t2 
+     * @param t2
      */
     public void issueOrder(Tile t1, Tile t2) {
         Aim direction = null;
@@ -207,7 +222,7 @@ public class Ants {
             if (t2.col() - t1.col() >= this.cols / 2) {
                 direction = Aim.WEST;
             } else {
-                direction =Aim.EAST;
+                direction = Aim.EAST;
             }
         } else if (t1.col() > t2.col()) {
             if (t1.col() - t2.col() >= this.cols / 2) {
@@ -216,9 +231,17 @@ public class Ants {
                 direction = Aim.WEST;
             }
         }
-        
+
         System.out.println("o " + t1.row() + " " + t1.col() + " " + direction.symbol);
         System.out.flush();
+    }
+
+    public Set<Tile> myHills() {
+        return this.myHills;
+    }
+
+    public Set<Tile> enemyHills() {
+        return this.enemyHills;
     }
 
     public void issueOrder(int row, int col, Aim direction) {
@@ -394,37 +417,54 @@ public class Ants {
     }
 
     private void gatherFood() {
-        Set<Tile> visited = new HashSet<Tile>(foodList);
-        LinkedList<Tile> toBeProcessed = new LinkedList<Tile>(foodList);
+        Set<Tile> visited = new HashSet<Tile>();
+        LinkedList<Tile> toBeProcessed = new LinkedList<Tile>();
+        for (Tile food : foodList) {
+            food.dist = 0;
+            food.source = food;
+            visited.add(food);
+            toBeProcessed.addFirst(food);
+        }
+
         int foodAmount = visited.size();
         foodTargets = new HashMap<Tile, Tile>();
 
         while (!toBeProcessed.isEmpty()) {
             Tile temp = toBeProcessed.removeLast();
-            // gasire ant si marcarea vecinilor pentru a opri bfs din aceast loc
-            if (antList.containsKey(temp) && ((HashMap) antList).get(temp) == Ilk.MY_ANT) {
-                foodTargets.put(temp, temp.ancestor);
-                if (foodTargets.size() == foodAmount) {
-                    break;
-                }
-                for (Aim aim : Aim.values()) {
-                    if (!tile(temp, aim).equals(temp.ancestor)) {
-                        visited.add(tile(temp, aim));
-                    }
-                }
+            if (foodTargets.size() == foodAmount) {
+                break;
             }
-            
-            for (Aim aim : Aim.values()) {
-                Tile next = tile(temp, aim);
-                if (!visited.contains(next)
-                        && ilk(next).isPassable()
-                        && isVisible(next)) {
-                    next.ancestor = temp;
-                    visited.add(next);
-                    toBeProcessed.addFirst(next);
+            if (temp.dist <= 12 || !temp.source.assigned) {
+                for (Aim aim : Aim.values()) {
+                    Tile next = tile(temp, aim);
+                    if (!visited.contains(next)
+                            && ilk(next).isPassable()
+                            && isVisible(next)) {
+
+                        if (ilk(temp, aim) == Ilk.FOOD) {
+                            if (ilk(temp)
+                                    == Ilk.FOOD) {
+                                next.source = temp.source;
+                            } else {
+                                next.source = next;
+                                next.assigned = false;
+                            }
+                            //next.source.foodArea.add(next);
+                        } else if (ilk(temp, aim) == Ilk.MY_ANT) {
+                            foodTargets.put(next, temp);
+                            temp.source.assigned = true;
+
+                        }
+
+                        next.dist = temp.dist + 1;
+                        next.source = temp.source;
+                        next.ancestor = temp;
+                        visited.add(next);
+                        toBeProcessed.addFirst(next);
+                    }
+
+
                 }
-
-
             }
         }
 

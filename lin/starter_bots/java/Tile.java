@@ -1,6 +1,8 @@
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Tile {
 	Tile(int row, int col) {
@@ -13,6 +15,9 @@ public class Tile {
         public int dist;
         public Tile direction;
         public Tile ancestor;
+        public Tile source;
+        public Set<Tile> foodArea = new HashSet<Tile>();
+        public boolean assigned;
 	
 	public int row() {
 		return this.row;

@@ -14,7 +14,7 @@ public class RandomBot implements Bot {
      * @param ants
      * @return
      */
-    public Aim explore(Tile antLoc, Ants ants) {
+    public Aim explore(Tile antLoc, Ants ants, Set<Tile> destinations) {
 
         Aim next = null;
         LinkedList<Tile> toVisit = new LinkedList<Tile>();
@@ -33,18 +33,19 @@ public class RandomBot implements Bot {
         visited.add(antLoc);
         while (!toVisit.isEmpty()) {
             Tile temp = toVisit.removeLast();
-            if (temp.dist > 10) {
-                break;
-            }
+            if (temp.dist <= 11) {
 
-            for (Aim aim : Aim.values()) {
-                if (!visited.contains(ants.tile(temp, aim)) && ants.ilk(temp, aim).isUnoccupied()) {
-                    Tile n = ants.tile(temp, aim);
-                    n.dist = temp.dist + 1;
-                    n.direction = temp.direction;
-                    ants.time[n.direction.row()][n.direction.col()] += ants.time(n);
-                    visited.add(n);
-                    toVisit.addFirst(n);
+
+
+                for (Aim aim : Aim.values()) {
+                    if (!visited.contains(ants.tile(temp, aim)) && ants.ilk(temp, aim).isUnoccupied()) {
+                        Tile n = ants.tile(temp, aim);
+                        n.dist = temp.dist + 1;
+                        n.direction = temp.direction;
+                        ants.time[n.direction.row()][n.direction.col()] += ants.time(n);
+                        visited.add(n);
+                        toVisit.addFirst(n);
+                    }
                 }
             }
         }
@@ -53,17 +54,22 @@ public class RandomBot implements Bot {
         int max = 0;
         for (Aim aim : Aim.values()) {
             int timeTemp = ants.time(ants.tile(antLoc, aim));
-            if (timeTemp > max && ants.ilk(ants.tile(antLoc, aim)).isUnoccupied()) {
+            Tile t = ants.tile(antLoc, aim);
+            if (timeTemp > max && ants.ilk(t).isUnoccupied()
+                    && !destinations.contains(t)) {
                 max = timeTemp;
                 next = aim;
             }
+            ants.time[t.row()][t.col()] = 0;
         }
-
         return next;
     }
 
     public void do_turn(Ants ants) {
         Set<Tile> destinations = new HashSet<Tile>();
+        for (Tile myHill : ants.myHills()) {
+            destinations.add(myHill);
+        }
         for (Tile antLoc : ants.myAnts()) {
             boolean issued = false;
             if (ants.foodTargets.containsKey(antLoc)
@@ -72,7 +78,7 @@ public class RandomBot implements Bot {
                 ants.issueOrder(antLoc, ants.foodTargets.get(antLoc));
                 issued = true;
             } else {
-                Aim next = explore(antLoc, ants);
+                Aim next = explore(antLoc, ants, destinations);
                 if (next != null) {
                     ants.issueOrder(antLoc, next);
                     destinations.add(ants.tile(antLoc, next));
@@ -81,6 +87,16 @@ public class RandomBot implements Bot {
             }
 
             if (!issued) {
+                if (destinations.contains(antLoc)) {
+                    for (Aim aim : Aim.values()) {
+                        if (!destinations.contains(ants.tile(antLoc, aim)) && 
+                                ants.ilk(antLoc, aim).isUnoccupied()) {
+                            ants.issueOrder(antLoc, aim);
+                            destinations.add(ants.tile(antLoc, aim));
+                            break;
+                        }
+                    }
+                }
                 destinations.add(antLoc);
             }
         }
