@@ -24,6 +24,7 @@ public class Ants {
     public HashMap<Tile, Tile> foodTargets;
     private Set<Tile> myHills;
     private Set<Tile> enemyHills;
+    private Map<Integer, HashSet<Tile>> intToArea;
 
     public int turn() {
         return this.turn;
@@ -192,7 +193,6 @@ public class Ants {
                 time[temp.row()][temp.col()] = 0;
             }
         }
-        gatherFood();
         return true;
     }
 
@@ -416,7 +416,7 @@ public class Ants {
         }
     }
 
-    private void gatherFood() {
+    public void gatherFood() {
         Set<Tile> visited = new HashSet<Tile>();
         LinkedList<Tile> toBeProcessed = new LinkedList<Tile>();
         for (Tile food : foodList) {
@@ -470,4 +470,52 @@ public class Ants {
 
 
     }
+
+  /*  public void createMyAreas() {
+        intToArea = new HashMap<Integer, HashSet<Tile>>();
+        Set<Tile> visited = new HashSet<Tile>();
+        
+        int id = 1;
+        for (Tile myAnt : myAnts()) {
+            myAnt.id = id;
+            HashSet<Tile> area = new HashSet<Tile>();
+            area.add(myAnt);
+            intToArea.put(id, area);
+            myAnt.dist = 0;
+            visited.add(myAnt);
+            id++;
+        }
+        HashSet<Tile> enemyArea = new HashSet<Tile>();
+        for (Tile enemyAnt : enemyAnts()) {
+            enemyAnt.dist = 0;
+            enemyAnt.id = 0;
+            enemyArea.add(enemyAnt);
+            visited.add(enemyAnt);
+        }
+        intToArea.put(0, enemyArea);
+
+        while (!toBeProcessed.isEmpty()) {
+            Tile curr = toBeProcessed.removeLast();
+            HashSet<Tile> currArea = intToArea.get(curr.id);
+
+            for (Aim aim : Aim.values()) {
+                Tile next = tile(curr, aim);
+                next.dist = curr.dist + 1;
+                if (next.dist <= 20 && ilk(next).isPassable()) {
+                    if (!visited.contains(next)) {
+                        currArea.add(next);
+                        next.id = curr.id;
+                        intToArea.put(curr.id, currArea);
+                        visited.add(next);
+                        toBeProcessed.addFirst(next);
+                    } else {
+                        if (next.id != curr.id && curr.id != 0 && next.id!= 0) {
+                            
+                        }
+                    }
+
+                }
+            }
+        }
+    }*/
 }

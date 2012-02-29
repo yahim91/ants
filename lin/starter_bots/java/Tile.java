@@ -16,8 +16,8 @@ public class Tile {
         public Tile direction;
         public Tile ancestor;
         public Tile source;
-        public Set<Tile> foodArea = new HashSet<Tile>();
         public boolean assigned;
+        public int id;
 	
 	public int row() {
 		return this.row;

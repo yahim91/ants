@@ -33,7 +33,7 @@ public class RandomBot implements Bot {
         visited.add(antLoc);
         while (!toVisit.isEmpty()) {
             Tile temp = toVisit.removeLast();
-            if (temp.dist <= 11) {
+            if (temp.dist <= 13 ) {
 
 
 
@@ -70,6 +70,8 @@ public class RandomBot implements Bot {
         for (Tile myHill : ants.myHills()) {
             destinations.add(myHill);
         }
+        
+        ants.gatherFood();
         for (Tile antLoc : ants.myAnts()) {
             boolean issued = false;
             if (ants.foodTargets.containsKey(antLoc)
