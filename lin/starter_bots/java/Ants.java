@@ -6,8 +6,8 @@ public class Ants {
 
     private int turn = 0;
     private int turns = 0;
-    private int rows = 0;
-    private int cols = 0;
+    private static int rows = 0;
+    private static int cols = 0;
     private int loadtime = 0;
     private int turntime = 0;
     private int viewradius2 = 0;
@@ -37,12 +37,12 @@ public class Ants {
         return this.turns;
     }
 
-    public int rows() {
-        return this.rows;
+    public static int rows() {
+        return Ants.rows;
     }
 
-    public int cols() {
-        return this.cols;
+    public static int cols() {
+        return Ants.cols;
     }
 
     public int loadtime() {

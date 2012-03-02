@@ -43,4 +43,12 @@ public class Tile {
 	public String toString() {
 		return "(" + this.row + "," + this.col + ")";
 	}
+        public int manhattanDist (Tile tile2) {
+                int d1, d2;
+                d1 = Math.abs(row - tile2.row());
+                d2 = Math.abs(col - tile2.col());
+                d1 = d1 < (Ants.rows() - d1) ? d1 : (Ants.rows() - d1);
+                d2 = d2 < (Ants.cols() - d2) ? d2 : (Ants.cols() - d2);
+                return (d1 + d2);
+        }
 }
