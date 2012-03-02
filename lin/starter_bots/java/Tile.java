@@ -16,6 +16,7 @@ public class Tile {
         public Tile direction;
         public Tile ancestor;
         public Tile source;
+        public Aim _source;
         public boolean assigned;
         public int id;
 	

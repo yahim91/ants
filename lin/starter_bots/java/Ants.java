@@ -24,9 +24,10 @@ public class Ants {
     public HashMap<Tile, Tile> foodTargets;
     private Set<Tile> myHills;
     private Set<Tile> enemyHills;
-    private Map<Integer, HashSet<Tile>> intToArea;
+    public Map<Integer, HashSet<Tile>> intToArea;
     public int[][] id;
     public Tile source[][];
+    public HashMap<Tile, Tile> missions;
 
     public int turn() {
         return this.turn;
@@ -100,6 +101,7 @@ public class Ants {
             this.visible = new boolean[this.rows][this.cols];
             this.myHills = new HashSet<Tile>();
             this.enemyHills = new HashSet<Tile>();
+            this.missions = new HashMap<Tile, Tile>();
 
             for (int i = 0; i < this.rows; ++i) {
                 Arrays.fill(visible[i], false);

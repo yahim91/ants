@@ -7,6 +7,39 @@ public class RandomBot implements Bot {
         Ants.run(new RandomBot());
     }
 
+    public Aim aStar(Tile source, Tile dest, Set<Tile> destinations, Ants ants) {
+
+        PriorityQueue<Map.Entry<Tile, Integer>> toBeProcessed = new PriorityQueue<Map.Entry<Tile, Integer>>();
+        HashSet<Tile> visited = new HashSet<Tile>();
+        toBeProcessed.add(new MyEntry<Tile, Integer>(source, 0));
+        visited.add(source);
+
+        while (!toBeProcessed.isEmpty()) {
+            MyEntry<Tile, Integer> currEntry = (MyEntry<Tile, Integer>) toBeProcessed.poll();
+            for (Aim aim : Aim.values()) {
+                Tile next = ants.tile(currEntry.getKey(), aim);
+                if (currEntry.getKey().equals(source)) {
+                    next._source = aim;
+                } else {
+                    next._source = currEntry.getKey()._source;
+                }
+                if (!visited.contains(next) && ants.ilk(next).isPassable()) {
+                    toBeProcessed.add(new MyEntry<Tile, Integer>(next, currEntry.getValue() + 1));
+                    visited.add(next);
+                    if (next.equals(dest)) {
+                        if (!destinations.contains(next)) {
+                            return next._source;
+                        } else {
+                            return null;
+                        }
+                    }
+
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * metoda explore pentru o furnica fara task
      *
@@ -33,12 +66,12 @@ public class RandomBot implements Bot {
         visited.add(antLoc);
         while (!toVisit.isEmpty()) {
             Tile temp = toVisit.removeLast();
-            if (temp.dist <= 13 ) {
+            if (temp.dist <= 13) {
 
 
 
                 for (Aim aim : Aim.values()) {
-                    if (!visited.contains(ants.tile(temp, aim)) && ants.ilk(temp, aim).isUnoccupied()) {
+                    if (!visited.contains(ants.tile(temp, aim)) && ants.ilk(temp, aim).isPassable()) {
                         Tile n = ants.tile(temp, aim);
                         n.dist = temp.dist + 1;
                         n.direction = temp.direction;
@@ -67,19 +100,24 @@ public class RandomBot implements Bot {
 
     public void do_turn(Ants ants) {
         Set<Tile> destinations = new HashSet<Tile>();
+
         for (Tile myHill : ants.myHills()) {
             destinations.add(myHill);
         }
         ants.createMyAreas();
         ants.gatherFood();
+
         for (Tile antLoc : ants.myAnts()) {
             boolean issued = false;
             if (ants.foodTargets.containsKey(antLoc)
                     && !destinations.contains(ants.foodTargets.get(antLoc))) {
                 destinations.add(ants.foodTargets.get(antLoc));
                 ants.issueOrder(antLoc, ants.foodTargets.get(antLoc));
+                if (ants.missions.containsKey(antLoc)) {
+                    ants.missions.remove(antLoc);
+                }
                 issued = true;
-            } else {
+            } else if (!ants.missions.containsKey(antLoc)) {
                 Aim next = explore(antLoc, ants, destinations);
                 if (next != null) {
                     ants.issueOrder(antLoc, next);
@@ -87,12 +125,31 @@ public class RandomBot implements Bot {
                     issued = true;
                 }
             }
+            if (issued == false) {
+                if (!ants.missions.containsKey(antLoc)) {
+                    Object[] border = ants.intToArea.get(ants.getId(antLoc)).toArray();
+                    ants.missions.put(antLoc, (Tile) border[0]);
+                }
+                if (!ants.missions.get(antLoc).equals(antLoc)) {
+                    Aim _next = aStar(antLoc, ants.missions.get(antLoc), destinations, ants);
+                    if (_next != null) {
+                        destinations.add(ants.tile(antLoc, _next));
+                        ants.issueOrder(antLoc, _next);
+                        issued = true;
+                        Tile dest = ants.missions.get(antLoc);
+                        ants.missions.remove(antLoc);
+                        ants.missions.put(ants.tile(antLoc, _next), dest);
+                    }
+                } else {
+                    ants.missions.remove(antLoc);
+                }
 
+            }
             if (!issued) {
                 if (destinations.contains(antLoc)) {
                     for (Aim aim : Aim.values()) {
-                        if (!destinations.contains(ants.tile(antLoc, aim)) && 
-                                ants.ilk(antLoc, aim).isUnoccupied()) {
+                        if (!destinations.contains(ants.tile(antLoc, aim))
+                                && ants.ilk(antLoc, aim).isUnoccupied()) {
                             ants.issueOrder(antLoc, aim);
                             destinations.add(ants.tile(antLoc, aim));
                             break;
