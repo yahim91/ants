@@ -11,12 +11,12 @@ public class RandomBot implements Bot {
 
         PriorityQueue<Map.Entry<Tile, Integer>> toBeProcessed = new PriorityQueue<Map.Entry<Tile, Integer>>();
         HashSet<Tile> visited = new HashSet<Tile>();
-        toBeProcessed.add(new MyEntry<Tile, Integer>(source, 0));
+        toBeProcessed.add(new MyEntry(source, 0));
         visited.add(source);
         source.direction = dest;
 
         while (!toBeProcessed.isEmpty()) {
-            MyEntry<Tile, Integer> currEntry = (MyEntry<Tile, Integer>) toBeProcessed.poll();
+            MyEntry currEntry = (MyEntry) toBeProcessed.poll();
             for (Aim aim : Aim.values()) {
                 Tile next = ants.tile(currEntry.getKey(), aim);
                 if (currEntry.getKey().equals(source)) {
@@ -26,7 +26,7 @@ public class RandomBot implements Bot {
                 }
                 next.direction = dest;
                 if (!visited.contains(next) && ants.ilk(next).isPassable()) {
-                    toBeProcessed.add(new MyEntry<Tile, Integer>(next, currEntry.getValue() + 1));
+                    toBeProcessed.add(new MyEntry(next, currEntry.getValue() + 1));
                     visited.add(next);
                     if (next.equals(dest)) {
                         if (!destinations.contains(next)) {
@@ -134,7 +134,7 @@ public class RandomBot implements Bot {
                 }
                 if (!ants.missions.get(antLoc).equals(antLoc)) {
                     Aim _next = aStar(antLoc, ants.missions.get(antLoc), destinations, ants);
-                    if (_next != null) {
+                    if (_next != null && !destinations.contains(ants.tile(antLoc, _next))) {
                         destinations.add(ants.tile(antLoc, _next));
                         ants.issueOrder(antLoc, _next);
                         issued = true;
