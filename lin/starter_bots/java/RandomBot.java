@@ -70,7 +70,7 @@ public class RandomBot implements Bot {
         for (Tile myHill : ants.myHills()) {
             destinations.add(myHill);
         }
-        
+        ants.createMyAreas();
         ants.gatherFood();
         for (Tile antLoc : ants.myAnts()) {
             boolean issued = false;
