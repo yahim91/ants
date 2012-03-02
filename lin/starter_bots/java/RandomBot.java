@@ -13,6 +13,7 @@ public class RandomBot implements Bot {
         HashSet<Tile> visited = new HashSet<Tile>();
         toBeProcessed.add(new MyEntry<Tile, Integer>(source, 0));
         visited.add(source);
+        source.direction = dest;
 
         while (!toBeProcessed.isEmpty()) {
             MyEntry<Tile, Integer> currEntry = (MyEntry<Tile, Integer>) toBeProcessed.poll();
@@ -23,6 +24,7 @@ public class RandomBot implements Bot {
                 } else {
                     next._source = currEntry.getKey()._source;
                 }
+                next.direction = dest;
                 if (!visited.contains(next) && ants.ilk(next).isPassable()) {
                     toBeProcessed.add(new MyEntry<Tile, Integer>(next, currEntry.getValue() + 1));
                     visited.add(next);

@@ -1,5 +1,6 @@
 
 import java.util.Map.Entry;
+import java.lang.Object;
 
 
 
@@ -39,8 +40,12 @@ public class MyEntry implements Entry<Tile, Integer>, Comparable<MyEntry> {
 
     @Override
     public int compareTo(MyEntry t) {
-     return  this.i.intValue() + this.  }
-
-
-    
+     return (((i.intValue()              
+             + Math.abs(k.col() - k.direction.col()))
+             + Math.abs(k.row() - k.direction.row()))
+             - (t.getValue().intValue() 
+             + Math.abs(t.getKey().col() - t.getKey().direction.col())
+             + Math.abs(t.getKey().row() - t.getKey().direction.row())));
+    }
+          
 }
