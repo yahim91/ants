@@ -141,7 +141,8 @@ public class RandomBot implements Bot {
                 }
                 if (!ants.missions.get(antLoc).equals(antLoc)) {
                     Aim _next = aStar(antLoc, ants.missions.get(antLoc), destinations, ants);
-                    if (_next != null && !destinations.contains(ants.tile(antLoc, _next))) {
+                    if (_next != null && !destinations.contains(ants.tile(antLoc, _next)) 
+                            && ants.ilk(antLoc, _next).isUnoccupied()) {
                         destinations.add(ants.tile(antLoc, _next));
                         Tile dest = ants.missions.get(antLoc);
                         ants.missions.remove(antLoc);
@@ -157,18 +158,21 @@ public class RandomBot implements Bot {
                 
 
             }
-            if (!issued) {
-                if (destinations.contains(antLoc)) {
+            if (issued == false) {
+ //               if (destinations.contains(antLoc)) {
                     for (Aim aim : Aim.values()) {
                         if (!destinations.contains(ants.tile(antLoc, aim))
                                 && ants.ilk(antLoc, aim).isUnoccupied()) {
                             ants.issueOrder(antLoc, aim);
                             destinations.add(ants.tile(antLoc, aim));
+                            issued = true;
                             break;
                         }
                     }
-                }
-                destinations.add(antLoc);
+ //               }
+            }
+            if (issued == false ) {
+                  destinations.add(antLoc);
             }
         }
     }
