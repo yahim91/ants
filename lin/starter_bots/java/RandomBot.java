@@ -90,8 +90,7 @@ public class RandomBot implements Bot {
         for (Aim aim : Aim.values()) {
             int timeTemp = ants.time(ants.tile(antLoc, aim));
             Tile t = ants.tile(antLoc, aim);
-            if (timeTemp > max && ants.ilk(t).isUnoccupied()
-                    && !destinations.contains(t)) {
+            if (timeTemp > max && !destinations.contains(t)) {
                 max = timeTemp;
                 next = aim;
             }

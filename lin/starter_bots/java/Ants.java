@@ -436,6 +436,7 @@ public class Ants {
         for (Tile food : foodList) {
             food.dist = 0;
             food.source = food;
+            food.assigned = false;
             visited.add(food);
             toBeProcessed.addFirst(food);
         }
@@ -453,18 +454,9 @@ public class Ants {
                     Tile next = tile(temp, aim);
                     if (!visited.contains(next)
                             && ilk(next).isPassable()
-                            && isVisible(next)) {
+                            && isVisible(next) && !temp.source.assigned) {
 
-                        if (ilk(temp, aim) == Ilk.FOOD) {
-                            if (ilk(temp)
-                                    == Ilk.FOOD) {
-                                next.source = temp.source;
-                            } else {
-                                next.source = next;
-                                next.assigned = false;
-                            }
-                            //next.source.foodArea.add(next);
-                        } else if (ilk(temp, aim) == Ilk.MY_ANT) {
+                        if (ilk(temp, aim) == Ilk.MY_ANT) {
                             foodTargets.put(next, temp);
                             temp.source.assigned = true;
 
@@ -476,13 +468,9 @@ public class Ants {
                         visited.add(next);
                         toBeProcessed.addFirst(next);
                     }
-
-
                 }
             }
         }
-
-
     }
 
     public void createMyAreas() {
@@ -513,44 +501,54 @@ public class Ants {
             toBeProcessed.addFirst(enemyAnt);
         }
         intToArea.put(0, enemyArea);
+        boolean toBeRemoved;
 
         while (!toBeProcessed.isEmpty()) {
             Tile curr;
             curr = toBeProcessed.removeLast();
+            toBeRemoved = true;
             HashSet<Tile> currArea = intToArea.get(getId(getSource(curr)));
-            if (curr.dist <= 20) {
-                currArea.remove(curr);
-                for (Aim aim : Aim.values()) {
-                    Tile next = tile(curr, aim);
-                    if (ilk(next).isPassable()
-                            && (!visited.contains(next)
-                            || visited.contains(next)
-                            && getId(getSource(next)) != getId(getSource(curr)))) {
-                        if (!visited.contains(next)) {
-                            source[next.row()][next.col()] = getSource(curr);
-                            next.dist = curr.dist + 1;
-                            currArea.add(next);
-                            visited.add(next);
-                            toBeProcessed.addFirst(next);
-                        } else {
-                            if (getId(getSource(next)) != 0
-                                    && getId(getSource(next)) != getId(getSource(curr))) {
-                                HashSet<Tile> nextArea = intToArea.get(getId(getSource(next)));
-                                if (!nextArea.equals(currArea)) {
-                                    currArea.addAll(nextArea);
-                                    intToArea.remove(getId(getSource(next)));
-                                    int idNext = getId(getSource(next));
-                                    for (Tile _source : sources) {
-                                        if (getId(_source) == idNext) {
-                                            id[_source.row()][_source.col()] = getId(getSource(curr));
-                                        }
-                                    }
 
+            for (Aim aim : Aim.values()) {
+                Tile next = tile(curr, aim);
+                if (ilk(next).isPassable()
+                        && (!visited.contains(next)
+                        || (visited.contains(next)
+                        && getId(getSource(next)) != getId(getSource(curr))))
+                        && curr.dist < 20) {
+                    if (!visited.contains(next)) {
+                        source[next.row()][next.col()] = getSource(curr);
+                        next.dist = curr.dist + 1;
+                        currArea.add(next);
+                        visited.add(next);
+                        toBeProcessed.addFirst(next);
+                    } else {
+                        if (getId(getSource(next)) != 0
+                                && getId(getSource(next)) != getId(getSource(curr))) {
+                            HashSet<Tile> nextArea = intToArea.get(getId(getSource(next)));
+                            if (!nextArea.equals(currArea)) {
+                                currArea.addAll(nextArea);
+                                intToArea.remove(getId(getSource(next)));
+                                int idNext = getId(getSource(next));
+                                for (Tile _source : sources) {
+                                    if (getId(_source) == idNext) {
+                                        id[_source.row()][_source.col()] = getId(getSource(curr));
+                                    }
                                 }
+
                             }
                         }
                     }
                 }
+                if (ilk(next) == Ilk.WATER || curr.dist == 20 || getId(getSource(next)) == 0) {
+                    toBeRemoved = false;
+                }
+
+
+            }
+
+            if (toBeRemoved) {
+                currArea.remove(curr);
             }
             intToArea.put(getId(getSource(curr)), currArea);
         }
