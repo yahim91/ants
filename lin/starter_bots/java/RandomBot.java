@@ -144,15 +144,18 @@ public class RandomBot implements Bot {
                     Aim _next = aStar(antLoc, ants.missions.get(antLoc), destinations, ants);
                     if (_next != null && !destinations.contains(ants.tile(antLoc, _next))) {
                         destinations.add(ants.tile(antLoc, _next));
-                        ants.issueOrder(antLoc, _next);
-                        issued = true;
                         Tile dest = ants.missions.get(antLoc);
                         ants.missions.remove(antLoc);
-                        ants.missions.put(ants.tile(antLoc, _next), dest);
+                        if (_next != null) {
+                            issued = true;
+                            ants.issueOrder(antLoc, _next);
+                            ants.missions.put(ants.tile(antLoc, _next), dest);
+                        }
                     }
                 } else {
                     ants.missions.remove(antLoc);
                 }
+                
 
             }
             if (!issued) {
