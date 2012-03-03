@@ -129,21 +129,32 @@ public class RandomBot implements Bot {
             if (issued == false) {
                 if (!ants.missions.containsKey(antLoc)) {
                     Object[] border = ants.intToArea.get(ants.getId(antLoc)).toArray();
-                    ants.missions.put(antLoc, (Tile) border[0]);
+                    int min = ((Tile)border[0]).manhattanDist(antLoc);
+                    int minp = 0;
+                    for (int i = 1; i < border.length; i++) {
+                        if (min > ((Tile)border[i]).manhattanDist(antLoc)) {
+                            min = ((Tile)border[0]).manhattanDist(antLoc);
+                            minp = i;
+                        }
+                    }
+                    ants.missions.put(antLoc, (Tile) border[minp]);
                 }
                 if (!ants.missions.get(antLoc).equals(antLoc)) {
                     Aim _next = aStar(antLoc, ants.missions.get(antLoc), destinations, ants);
                     if (_next != null && !destinations.contains(ants.tile(antLoc, _next))) {
                         destinations.add(ants.tile(antLoc, _next));
-                        ants.issueOrder(antLoc, _next);
-                        issued = true;
                         Tile dest = ants.missions.get(antLoc);
                         ants.missions.remove(antLoc);
-                        ants.missions.put(ants.tile(antLoc, _next), dest);
+                        if (_next != null) {
+                            issued = true;
+                            ants.issueOrder(antLoc, _next);
+                            ants.missions.put(ants.tile(antLoc, _next), dest);
+                        }
                     }
                 } else {
                     ants.missions.remove(antLoc);
                 }
+                
 
             }
             if (!issued) {
