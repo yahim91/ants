@@ -540,7 +540,8 @@ public class Ants {
                         }
                     }
                 }
-                if (ilk(next) == Ilk.WATER || curr.dist == 20 || getId(getSource(next)) == 0) {
+                if (ilk(next) == Ilk.WATER) {
+                } else if (curr.dist == 20 || getId(getSource(next)) == 0) {
                     toBeRemoved = false;
                 }
 
