@@ -523,7 +523,7 @@ public class Ants {
                         visited.add(next);
                         toBeProcessed.addFirst(next);
                     } else {
-                        if (getId(getSource(next)) != 0
+                        if (getId(getSource(next)) != 0 && getId(getSource(curr)) != 0
                                 && getId(getSource(next)) != getId(getSource(curr))) {
                             HashSet<Tile> nextArea = intToArea.get(getId(getSource(next)));
                             if (!nextArea.equals(currArea)) {

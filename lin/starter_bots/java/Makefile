@@ -14,4 +14,4 @@ $(JAR): $(CLASSES)
 %.class: %.java
 	$(JAVAC) $(JAVAC_ARGS) $<
 clean:
-	-rm -Rf *.class
+	-rm -Rf *.class MyBot.jar
