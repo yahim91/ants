@@ -1,10 +1,47 @@
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class RandomBot implements Bot {
 
     public static void main(String[] args) {
         Ants.run(new RandomBot());
+    }
+
+    public Entry assignMission(Tile antLoc, Ants ants, Set<Tile> borders, Set<Tile> destinations) {
+        HashSet<Tile> visited = new HashSet<Tile>();
+        LinkedList<Tile> toBeProcessed = new LinkedList<Tile>();
+        antLoc.dist = 0;
+        visited.add(antLoc);
+        toBeProcessed.addFirst(antLoc);
+        HashMap<Tile, Aim> res = new HashMap<Tile, Aim>();
+        while (!toBeProcessed.isEmpty()) {
+            Tile curr = toBeProcessed.removeLast();
+            if (borders.contains(curr)) {
+                res.put(curr, curr._source);
+                Iterator it = res.entrySet().iterator();
+                Entry result = (Entry) it.next();
+                return result;
+            }
+            if (curr.dist <= 100) {
+                for (Aim aim : Aim.values()) {
+                    Tile next = ants.tile(curr, aim);
+                    if (!visited.contains(next) && ants.ilk(next).isPassable()
+                            && ((curr.equals(antLoc) && !destinations.contains(next)
+                            && ants.ilk(next).isUnoccupied()) || !curr.equals(antLoc))) {
+                        if (curr.equals(antLoc)) {
+                            next._source = aim;
+                        } else {
+                            next._source = curr._source;
+                        }
+                        next.dist = curr.dist + 1;
+                        visited.add(next);
+                        toBeProcessed.addFirst(next);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public Aim aStar(Tile source, Tile dest, Set<Tile> destinations, Ants ants) {
@@ -25,7 +62,8 @@ public class RandomBot implements Bot {
                     next._source = currEntry.getKey()._source;
                 }
                 next.direction = dest;
-                if (!visited.contains(next) && ants.ilk(next).isPassable()) {
+                if (!visited.contains(next) && ants.ilk(next).isPassable()
+                        && ((currEntry.getKey().equals(source) && !destinations.contains(next)) || !currEntry.getKey().equals(source))) {
                     toBeProcessed.add(new MyEntry(next, currEntry.getValue() + 1));
                     visited.add(next);
                     if (next.equals(dest)) {
@@ -128,51 +166,67 @@ public class RandomBot implements Bot {
             }
             if (issued == false) {
                 if (!ants.missions.containsKey(antLoc)) {
-                    Object[] border = ants.intToArea.get(ants.getId(antLoc)).toArray();
-                    int min = ((Tile)border[0]).manhattanDist(antLoc);
-                    int minp = 0;
-                    for (int i = 1; i < border.length; i++) {
-                        if (min > ((Tile)border[i]).manhattanDist(antLoc)) {
-                            min = ((Tile)border[0]).manhattanDist(antLoc);
-                            minp = i;
-                        }
+                    /*
+                     * Object[] border =
+                     * ants.intToArea.get(ants.getId(antLoc)).toArray(); int min
+                     * = ((Tile) border[0]).manhattanDist(antLoc); int minp = 0;
+                     * for (int i = 1; i < border.length; i++) { if (min >
+                     * ((Tile) border[i]).manhattanDist(antLoc)) { min = ((Tile)
+                     * border[0]).manhattanDist(antLoc); minp = i; } }
+                     * ants.missions.put(antLoc, (Tile) border[minp]);
+                     */
+                    Entry mission = assignMission(antLoc, ants, ants.intToArea.get(ants.getId(antLoc)), destinations);
+                    if (mission != null
+                            && !destinations.contains(ants.tile(antLoc, (Aim) mission.getValue()))) {
+                        Aim _aim = (Aim) mission.getValue();
+                        Tile _dest = (Tile) mission.getKey();
+                        ants.missions.put(ants.tile(antLoc, _aim), _dest);
+                        destinations.add(ants.tile(antLoc, _aim));
+                        ants.issueOrder(antLoc, _aim);
+                        issued = true;
+                    } else {
+                        Random r = new Random();
+                        Object[] border = ants.intToArea.get(ants.getId(antLoc)).toArray();
+                        ants.missions.put(antLoc, (Tile) border[r.nextInt(border.length)]);
                     }
-                    ants.missions.put(antLoc, (Tile) border[minp]);
                 }
-                if (!ants.missions.get(antLoc).equals(antLoc)) {
-                    Aim _next = aStar(antLoc, ants.missions.get(antLoc), destinations, ants);
-                    if (_next != null && !destinations.contains(ants.tile(antLoc, _next)) 
-                            && ants.ilk(antLoc, _next).isUnoccupied()) {
-                        destinations.add(ants.tile(antLoc, _next));
-                        Tile dest = ants.missions.get(antLoc);
+                if (issued == false) {
+                    if (!ants.missions.get(antLoc).equals(antLoc)) {
+                        Aim _next = aStar(antLoc, ants.missions.get(antLoc), destinations, ants);
+                        if (_next != null && !destinations.contains(ants.tile(antLoc, _next))
+                                && ants.ilk(antLoc, _next).isUnoccupied()) {
+                            destinations.add(ants.tile(antLoc, _next));
+                            Tile dest = ants.missions.get(antLoc);
+                            ants.missions.remove(antLoc);
+                            if (_next != null) {
+                                issued = true;
+                                ants.issueOrder(antLoc, _next);
+                                ants.missions.put(ants.tile(antLoc, _next), dest);
+                            }
+                        }
+                    } else {
                         ants.missions.remove(antLoc);
-                        if (_next != null) {
-                            issued = true;
-                            ants.issueOrder(antLoc, _next);
-                            ants.missions.put(ants.tile(antLoc, _next), dest);
-                        }
                     }
-                } else {
-                    ants.missions.remove(antLoc);
                 }
-                
+
+
 
             }
             if (issued == false) {
- //               if (destinations.contains(antLoc)) {
-                    for (Aim aim : Aim.values()) {
-                        if (!destinations.contains(ants.tile(antLoc, aim))
-                                && ants.ilk(antLoc, aim).isUnoccupied()) {
-                            ants.issueOrder(antLoc, aim);
-                            destinations.add(ants.tile(antLoc, aim));
-                            issued = true;
-                            break;
-                        }
+                //               if (destinations.contains(antLoc)) {
+                for (Aim aim : Aim.values()) {
+                    if (!destinations.contains(ants.tile(antLoc, aim))
+                            && ants.ilk(antLoc, aim).isUnoccupied()) {
+                        ants.issueOrder(antLoc, aim);
+                        destinations.add(ants.tile(antLoc, aim));
+                        issued = true;
+                        break;
                     }
- //               }
+                }
+                //               }
             }
-            if (issued == false ) {
-                  destinations.add(antLoc);
+            if (issued == false) {
+                destinations.add(antLoc);
             }
         }
     }

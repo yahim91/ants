@@ -449,7 +449,7 @@ public class Ants {
             if (foodTargets.size() == foodAmount) {
                 break;
             }
-            if (temp.dist <= 12 || !temp.source.assigned) {
+            if (temp.dist <= 12 && !temp.source.assigned) {
                 for (Aim aim : Aim.values()) {
                     Tile next = tile(temp, aim);
                     if (!visited.contains(next)
