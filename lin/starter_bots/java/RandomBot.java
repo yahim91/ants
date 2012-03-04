@@ -111,8 +111,9 @@ public class RandomBot implements Bot {
 
 
                 for (Aim aim : Aim.values()) {
-                    if (!visited.contains(ants.tile(temp, aim)) && ants.ilk(temp, aim).isPassable()) {
-                        Tile n = ants.tile(temp, aim);
+                    Tile n = ants.tile(temp, aim);
+                    if (!visited.contains(n) && ants.ilk(n).isPassable()
+                            && ((temp.equals(antLoc) && !destinations.contains(n)) || !temp.equals(n))) {
                         n.dist = temp.dist + 1;
                         n.direction = temp.direction;
                         ants.time[n.direction.row()][n.direction.col()] += ants.time(n);
@@ -185,7 +186,7 @@ public class RandomBot implements Bot {
                         ants.issueOrder(antLoc, _aim);
                         issued = true;
                     } else {
-                        Random r = new Random();
+                        Random r = new Random(ants.seed());
                         Object[] border = ants.intToArea.get(ants.getId(antLoc)).toArray();
                         ants.missions.put(antLoc, (Tile) border[r.nextInt(border.length)]);
                     }
