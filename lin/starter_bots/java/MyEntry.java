@@ -4,14 +4,7 @@ import java.lang.Object;
 
 
 
-/*
- * To change this template, choose Tools | Templates and open the template in
- * the editor.
- */
-/**
- *
- * @author mihai
- */
+
 public class MyEntry implements Entry<Tile, Integer>, Comparable<MyEntry> {
 
     private Tile k;

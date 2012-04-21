@@ -44,6 +44,9 @@ public class RandomBot implements Bot {
         return null;
     }
 
+    /*
+     Metoda ce realizeaza A* intre 2 tile-uri
+     */
     public Aim aStar(Tile source, Tile dest, Set<Tile> destinations, Ants ants) {
 
         PriorityQueue<Map.Entry<Tile, Integer>> toBeProcessed = new PriorityQueue<Map.Entry<Tile, Integer>>();
@@ -80,12 +83,8 @@ public class RandomBot implements Bot {
         return null;
     }
 
-    /**
-     * metoda explore pentru o furnica fara task
-     *
-     * @param antLoc
-     * @param ants
-     * @return
+    /*
+     metoda explore prin BFS pentru o furnica fara task
      */
     public Aim explore(Tile antLoc, Ants ants, Set<Tile> destinations) {
 
@@ -140,14 +139,31 @@ public class RandomBot implements Bot {
 
     public void do_turn(Ants ants) {
         Set<Tile> destinations = new HashSet<Tile>();
-
+        Set<Tile> issues = new HashSet<Tile> ();
+        ArrayList < ArrayList <Pair<Tile, Aim>>> battleAnts =
+                new ArrayList < ArrayList <Pair<Tile, Aim>>>(ants.battle(ants.battleAreas()));
+        
         for (Tile myHill : ants.myHills()) {
             destinations.add(myHill);
         }
+        
+        for (ArrayList <Pair<Tile, Aim>> x : battleAnts){
+            for (Pair<Tile, Aim> y : x){
+                Tile next = ants.tile (y.fst, y.snd);
+                if (!destinations.contains(next) && ants.ilk(next).isPassable())
+                {
+                    ants.issueOrder(y.fst, next);
+                    destinations.add(next);
+                    issues.add(y.fst);
+                }
+            }
+        }
+        
         ants.createMyAreas();
         ants.gatherFood();
-
-        for (Tile antLoc : ants.myAnts()) {
+        HashSet<Tile> myAnts = new HashSet<Tile> (ants.myAnts());
+        myAnts.removeAll(issues);
+        for (Tile antLoc : myAnts) {
             boolean issued = false;
             if (ants.foodTargets.containsKey(antLoc)
                     && !destinations.contains(ants.foodTargets.get(antLoc))) {
@@ -167,15 +183,7 @@ public class RandomBot implements Bot {
             }
             if (issued == false) {
                 if (!ants.missions.containsKey(antLoc)) {
-                    /*
-                     * Object[] border =
-                     * ants.intToArea.get(ants.getId(antLoc)).toArray(); int min
-                     * = ((Tile) border[0]).manhattanDist(antLoc); int minp = 0;
-                     * for (int i = 1; i < border.length; i++) { if (min >
-                     * ((Tile) border[i]).manhattanDist(antLoc)) { min = ((Tile)
-                     * border[0]).manhattanDist(antLoc); minp = i; } }
-                     * ants.missions.put(antLoc, (Tile) border[minp]);
-                     */
+                   
                     Entry mission = assignMission(antLoc, ants, ants.intToArea.get(ants.getId(antLoc)), destinations);
                     if (mission != null
                             && !destinations.contains(ants.tile(antLoc, (Aim) mission.getValue()))) {
