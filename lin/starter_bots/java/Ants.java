@@ -28,6 +28,10 @@ public class Ants {
     public int[][] id;
     public Tile source[][];
     public HashMap<Tile, Tile> missions;
+    private ArrayList<Pair<Tile, Aim>> fin = new ArrayList<Pair<Tile, Aim>>();
+    private int bestValue;
+    private int sumDistFin2;
+    private int sumDist2;
 
     public int turn() {
         return this.turn;
@@ -573,14 +577,14 @@ public class Ants {
             enemies.add(cur);
 
             queue.addLast(cur);
-            cur.dist = 0;
+            //cur.dist = 0;
             visited.add(cur);
             while (!queue.isEmpty()) {
                 Tile cur2 = queue.removeFirst();
                 for (Aim aim : Aim.values()) {
                     Tile next = tile(cur2, aim);
-                    next.dist = cur2.dist + 1;
-                    if (!visited.contains(next) && next.dist < 5) {
+                    //next.dist = cur2.dist + 1;
+                    if (!visited.contains(next) && distance(next, cur) <= attackradius2 * 3) {
                         if (ilk(next).isEnemy()) {
                             enemies.add(next);
 
@@ -600,65 +604,102 @@ public class Ants {
         return ret;
     }
 
-     public ArrayList < ArrayList <Pair<Tile, Aim>>> battle(HashMap<Tile, Pair<HashSet<Tile>, HashSet<Tile>>> areas) {
-         ArrayList < ArrayList <Pair<Tile, Aim>>> res = new ArrayList < ArrayList <Pair<Tile, Aim>>>();
+    public ArrayList< ArrayList<Pair<Tile, Aim>>> battle(HashMap<Tile, Pair<HashSet<Tile>, HashSet<Tile>>> areas) {
+        ArrayList< ArrayList<Pair<Tile, Aim>>> res = new ArrayList< ArrayList<Pair<Tile, Aim>>>();
         for (Map.Entry x : areas.entrySet()) {
             ArrayList mines = new ArrayList((HashSet<Tile>) ((Pair) x.getValue()).getFirst());
             ArrayList enemies = new ArrayList((HashSet<Tile>) ((Pair) x.getValue()).getSecond());
-            ArrayList<Pair<Tile, Aim>> fin = new ArrayList<Pair<Tile, Aim>>();
+            //ArrayList<Pair<Tile, Aim>> fin = new ArrayList<Pair<Tile, Aim>>();
             ArrayList<Pair<Tile, Aim>> aux = new ArrayList<Pair<Tile, Aim>>();
             ArrayList<Pair<Tile, Aim>> auxe = new ArrayList<Pair<Tile, Aim>>();
-            maxi(0, mines, enemies, aux, auxe, fin, -9999);
-            res.add(auxe);
+            bestValue = -9999;
+            sumDistFin2 = 9999;
+            maxi(0, mines, enemies, aux, auxe);
+            //ArrayList<Pair<Tile, Aim>> fin2 = new ArrayList<Pair<Tile, Aim>>(fin);
+            ArrayList<Pair<Tile, Aim>> fin2 = new ArrayList<Pair<Tile, Aim>>( (ArrayList<Pair<Tile, Aim>>)fin.clone());
+            res.add(fin2);
         }
         return res;
-        
+
     }
 
     void maxi(int x, ArrayList<Tile> mines, ArrayList<Tile> enemies,
-            ArrayList<Pair<Tile, Aim>> aux, ArrayList<Pair<Tile, Aim>> auxe, ArrayList<Pair<Tile, Aim>> fin, int bestValue) {
+            ArrayList<Pair<Tile, Aim>> aux, ArrayList<Pair<Tile, Aim>> auxe/*
+             * ArrayList<Pair<Tile, Aim>> fin,
+             */) {
         int value;
         if (x < mines.size()) {
             Tile myAnt = mines.get(x);
+            // Cazul cand stau pe loc
+            Tile nextMove = myAnt;
+            if (ilk(nextMove).isPassable() && ilk(nextMove) != Ilk.MY_ANT) {
+                //map[nextMove.row()][nextMove.col()] = Ilk.MY_ANT;
+                //map[myAnt.row()][myAnt.col()] = Ilk.LAND;
+                Pair<Tile, Aim> pair = new Pair<Tile, Aim>(myAnt, null);
+                aux.add(pair);
+                maxi(x + 1, mines, enemies, aux, auxe);
+                aux.remove(pair);
+                //map[nextMove.row()][nextMove.col()] = Ilk.LAND;
+                //map[myAnt.row()][myAnt.col()] = Ilk.MY_ANT;
+            }
             for (Aim aim : Aim.values()) {
-                Tile nextMove = tile(myAnt, aim);
+                nextMove = tile(myAnt, aim);
                 if (ilk(nextMove).isPassable() && ilk(nextMove) != Ilk.MY_ANT) {
 
-                    map[nextMove.row()][nextMove.col()] = Ilk.MY_ANT;
-                    map[myAnt.row()][myAnt.col()] = Ilk.LAND;
+                    //map[nextMove.row()][nextMove.col()] = Ilk.MY_ANT;
+                    //map[myAnt.row()][myAnt.col()] = Ilk.LAND;
                     Pair<Tile, Aim> pair = new Pair<Tile, Aim>(myAnt, aim);
                     aux.add(pair);
-                    maxi(x + 1, mines, enemies, aux, auxe, fin, bestValue);
+                    maxi(x + 1, mines, enemies, aux, auxe);
                     aux.remove(pair);
-                    map[nextMove.row()][nextMove.col()] = Ilk.LAND;
-                    map[myAnt.row()][myAnt.col()] = Ilk.MY_ANT;
+                    //map[nextMove.row()][nextMove.col()] = Ilk.LAND;
+                    //map[myAnt.row()][myAnt.col()] = Ilk.MY_ANT;
                 }
             }
         } else {
-            value = mini(0, enemies, bestValue, aux, auxe);
-            if (value > bestValue) {
+            value = mini(0, enemies, aux, auxe);
+            if (value > bestValue || (value == bestValue && sumDistFin2 > sumDist2)) {
                 bestValue = value;
+                sumDistFin2 = sumDist2;
                 fin = (ArrayList<Pair<Tile, Aim>>) aux.clone();
             }
         }
     }
 
-    int mini(int x, ArrayList<Tile> enemies, int bestValue, ArrayList<Pair<Tile, Aim>> aux, ArrayList<Pair<Tile, Aim>> auxe) {
+    int mini(int x, ArrayList<Tile> enemies, ArrayList<Pair<Tile, Aim>> aux, ArrayList<Pair<Tile, Aim>> auxe) {
         int minValue;
         if (x < enemies.size()) {
             minValue = 9999;
             Tile enemyAnt = enemies.get(x);
+            // Cazul cand stau pe loc:
+            Tile nextMove = enemyAnt;
+            if (ilk(nextMove).isPassable() && !ilk(nextMove).isEnemy()) {
+                //map[nextMove.row()][nextMove.col()] = Ilk.PLAYER1;
+                //map[enemyAnt.row()][enemyAnt.col()] = Ilk.LAND;
+                Pair<Tile, Aim> pair = new Pair<Tile, Aim>(enemyAnt, null);
+                auxe.add(pair);
+                int value = mini(x + 1, enemies, aux, auxe);
+                auxe.remove(pair);
+                //map[nextMove.row()][nextMove.col()] = Ilk.LAND;
+                //map[enemyAnt.row()][enemyAnt.col()] = Ilk.PLAYER1;
+                if (value < bestValue) {
+                    return -9999;
+                }
+                if (value < minValue) {
+                    minValue = value;
+                }
+            }
             for (Aim aim : Aim.values()) {
-                Tile nextMove = tile(enemyAnt, aim);
+                nextMove = tile(enemyAnt, aim);
                 if (ilk(nextMove).isPassable() && !ilk(nextMove).isEnemy()) {
-                    map[nextMove.row()][nextMove.col()] = Ilk.PLAYER1;
-                    map[enemyAnt.row()][enemyAnt.col()] = Ilk.LAND;
+                    //map[nextMove.row()][nextMove.col()] = Ilk.PLAYER1;
+                    //map[enemyAnt.row()][enemyAnt.col()] = Ilk.LAND;
                     Pair<Tile, Aim> pair = new Pair<Tile, Aim>(enemyAnt, aim);
                     auxe.add(pair);
-                    int value = mini(x + 1, enemies, bestValue, aux, auxe);
+                    int value = mini(x + 1, enemies, aux, auxe);
                     auxe.remove(pair);
-                    map[nextMove.row()][nextMove.col()] = Ilk.LAND;
-                    map[enemyAnt.row()][enemyAnt.col()] = Ilk.PLAYER1;
+                    //map[nextMove.row()][nextMove.col()] = Ilk.LAND;
+                    //map[enemyAnt.row()][enemyAnt.col()] = Ilk.PLAYER1;
                     if (value < bestValue) {
                         return -9999;
                     }
@@ -678,10 +719,18 @@ public class Ants {
         ArrayList<Tile> enemyAnts = new ArrayList<Tile>();
         int en = 0, eu = 0, eval = 0;
         for (Pair x : aux) {
-            myAnts.add(tile((Tile) x.fst, (Aim) x.snd));
+            if (x.snd == null) {
+                myAnts.add((Tile) x.fst);
+            } else {
+                myAnts.add(tile((Tile) x.fst, (Aim) x.snd));
+            }
         }
         for (Pair x : auxe) {
-            enemyAnts.add(tile((Tile) x.fst, (Aim) x.snd));
+            if (x.snd == null) {
+                enemyAnts.add((Tile) x.fst);
+            } else {
+                enemyAnts.add(tile((Tile) x.fst, (Aim) x.snd));
+            }
         }
         for (Tile myAnt : myAnts) {
             en = eu = 0;
@@ -690,13 +739,19 @@ public class Ants {
                     en++;
                 }
             }
-            for (Tile myAnt2 : myAnts) {
-                if (distance(myAnt, myAnt2) <= attackradius2()) {
-                    eu++;
+            for (Tile enemyAnt : enemyAnts) {
+                if (distance(myAnt, enemyAnt) <= attackradius2()) {
+                    eu = 0;
+                    for (Tile myAnt2 : myAnts) {
+                        if (distance(myAnt2, enemyAnt) <= attackradius2()) {
+                            eu++;
+                        }
+                    }
+                    if (en >= eu) {
+                        eval--;
+                        break;
+                    }
                 }
-            }
-            if (eu < en) {
-                eval--;
             }
         }
 
@@ -707,13 +762,25 @@ public class Ants {
                     eu++;
                 }
             }
-            for (Tile enemyAnt2 : enemyAnts) {
-                if (distance(enemyAnt2, enemyAnt) <= attackradius2()) {
-                    en++;
+            for (Tile myAnt : myAnts) {
+                if (distance(myAnt, enemyAnt) <= attackradius2()) {
+                    en = 0;
+                    for (Tile enemyAnt2 : enemyAnts) {
+                        if (distance(enemyAnt2, myAnt) <= attackradius2()) {
+                            en++;
+                        }
+                    }
+                    if (eu >= en) {
+                        eval++;
+                        break;
+                    }
                 }
             }
-            if (eu > en) {
-                eval++;
+        }
+        sumDist2 = 0;
+        for (Tile myAnt : myAnts) {
+            for (Tile enemyAnt : enemyAnts) {
+                sumDist2 = sumDist2 + distance(myAnt, enemyAnt);
             }
         }
         return eval;

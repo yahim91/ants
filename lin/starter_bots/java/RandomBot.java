@@ -143,13 +143,18 @@ public class RandomBot implements Bot {
         ArrayList < ArrayList <Pair<Tile, Aim>>> battleAnts =
                 new ArrayList < ArrayList <Pair<Tile, Aim>>>(ants.battle(ants.battleAreas()));
         
-        for (Tile myHill : ants.myHills()) {
+        /*for (Tile myHill : ants.myHills()) {
             destinations.add(myHill);
-        }
+        }*/
         
         for (ArrayList <Pair<Tile, Aim>> x : battleAnts){
             for (Pair<Tile, Aim> y : x){
-                Tile next = ants.tile (y.fst, y.snd);
+                Tile next;
+                if (y.snd == null) {
+                    next = y.fst;
+                } else {
+                    next = ants.tile (y.fst, y.snd);
+                }
                 if (!destinations.contains(next) && ants.ilk(next).isPassable())
                 {
                     ants.issueOrder(y.fst, next);
@@ -161,9 +166,12 @@ public class RandomBot implements Bot {
         
         ants.createMyAreas();
         ants.gatherFood();
-        HashSet<Tile> myAnts = new HashSet<Tile> (ants.myAnts());
-        myAnts.removeAll(issues);
-        for (Tile antLoc : myAnts) {
+        //HashSet<Tile> myAnts = new HashSet<Tile> (ants.myAnts());
+        
+        //myAnts.removeAll(issues);
+        HashSet<Tile> myAntss = (HashSet<Tile>) ((HashSet<Tile>)ants.myAnts()).clone();
+        myAntss.removeAll(issues);
+        for (Tile antLoc : myAntss) {
             boolean issued = false;
             if (ants.foodTargets.containsKey(antLoc)
                     && !destinations.contains(ants.foodTargets.get(antLoc))) {

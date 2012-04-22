@@ -1,7 +1,7 @@
 JAVAC=javac -g
 JAVAC_ARGS=
 
-SOURCES=RandomBot.java
+SOURCES=RandomBot.java Ants.java
 CLASSES=$(SOURCES:%.java=%.class)
 JAR=MyBot.jar
 .PHONY: all clean
